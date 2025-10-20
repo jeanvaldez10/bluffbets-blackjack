@@ -343,10 +343,10 @@ export function BlackjackCanvas({
           />
         )}
 
-        {/* Dealer's Hand - Hide during initial deal until dealer cards are placed */}
+        {/* Dealer's Hand - Hide during dealing like original */}
         {gameState.gamePhase !== GamePhaseType.BETTING &&
           gameState.dealerHand.cards.length > 0 &&
-          (!gameState.isDealing || gameState.dealingStep > 4) && (
+          !gameState.isDealing && (
             <HandSprite
               cards={gameState.dealerHand.cards}
               x={positions.dealer.x}

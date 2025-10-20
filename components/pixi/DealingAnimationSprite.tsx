@@ -21,15 +21,6 @@ interface CardAnimation {
   isDealerHole?: boolean;
   flipProgress: number;
   shouldFlip: boolean;
-  // Current position
-  x: number;
-  y: number;
-  // Animation enhancements
-  controlPoint1: { x: number; y: number }; // Bezier curve control point 1
-  controlPoint2: { x: number; y: number }; // Bezier curve control point 2
-  trail: Array<{ x: number; y: number; rotation: number }>; // Trail positions
-  bounceProgress: number; // Landing bounce effect
-  glowAlpha: number; // Glow effect intensity
 }
 
 interface DealingAnimationProps {
@@ -83,30 +74,19 @@ function getCardForStep(
         cardIndex: 1,
       };
     default:
-      // For hit cards after initial deal
-      const isDealerTurn = dealerCards.length > 2;
+      const playerGotCard = playerCards.length > dealerCards.length;
+      const cardIndex = playerGotCard
+        ? playerCards.length - 1
+        : dealerCards.length - 1;
 
-      if (isDealerTurn) {
-        // Dealer's turn
-        return {
-          card: dealerCards[dealerCards.length - 1],
-          faceUp: true,
-          shouldFlip: true,
-          isPlayerCard: false,
-          isDealerHole: false,
-          cardIndex: dealerCards.length - 1,
-        };
-      } else {
-        // Player's turn
-        return {
-          card: playerCards[playerCards.length - 1],
-          faceUp: true,
-          shouldFlip: true,
-          isPlayerCard: true,
-          isDealerHole: false,
-          cardIndex: playerCards.length - 1,
-        };
-      }
+      return {
+        card: playerGotCard ? playerCards[cardIndex] : dealerCards[cardIndex],
+        faceUp: false,
+        shouldFlip: playerGotCard,
+        isPlayerCard: playerGotCard,
+        isDealerHole: !playerGotCard,
+        cardIndex,
+      };
   }
 }
 
@@ -125,7 +105,7 @@ export function DealingAnimationSprite({
   dealerCardSlots,
 }: DealingAnimationProps) {
   const [cards, setCards] = useState<CardAnimation[]>([]);
-  const animationSpeed = 0.05; // Increased animation speed (much faster)
+  const animationSpeed = 0.015; // Adjust for faster/slower animation
 
   useEffect(() => {
     // ✅ Only clear when the *entire* dealing sequence is done and game resets
@@ -142,62 +122,34 @@ export function DealingAnimationSprite({
   useEffect(() => {
     if (!isDealing) return;
     if (dealingStep > 0) {
-      // Check if previous card has started moving enough to start the next one
-      const prevCard = cards.find((c) => c.id === dealingStep - 1);
-      const shouldStartNext = !prevCard || prevCard.progress > 0.4; // Start next when previous is 40% done
-
-      if (!shouldStartNext) return;
-
       const { card, faceUp, isDealerHole, isPlayerCard, cardIndex } =
         getCardForStep(dealingStep, playerCards, dealerCards);
 
       let targetX, targetY;
 
-      const cardSpacing = isMobile ? 60 : 90;
-
-      // For initial deal (first 4 cards)
-      if (dealingStep <= 4) {
+      if (dealingStep < 4) {
         const slots = isPlayerCard ? playerCardSlots : dealerCardSlots;
         const slot = slots[cardIndex];
-        targetX = slot?.x ?? centerX;
+        targetX = slot?.x ?? centerX + cardIndex * 30;
         targetY = slot?.y ?? (isPlayerCard ? playerY : dealerY);
       } else {
-        // For hit cards after initial deal
-        const isDealerTurn = dealerCards.length > 2;
-        const currentCards = isDealerTurn ? dealerCards : playerCards;
-        const totalCards = currentCards.length;
-
-        // Calculate startX the same way HandSprite does
-        const startX = centerX - ((totalCards - 1) * cardSpacing) / 2;
-        const cardIndex = totalCards - 1; // Index of the new card
-
-        // Calculate final position using the same formula as HandSprite
-        targetX = startX + cardIndex * cardSpacing;
-        targetY = isDealerTurn ? dealerY : playerY;
+        if (isPlayerCard) {
+          const hitCardIndex = playerCards.length - 1;
+          const slot = playerCardSlots[hitCardIndex];
+          targetX = slot?.x ?? centerX + hitCardIndex * 20;
+          targetY = slot?.y ?? playerY;
+        } else {
+          const hitCardIndex = dealerCards.length - 1;
+          const slot = dealerCardSlots[hitCardIndex];
+          targetX = slot?.x ?? centerX + hitCardIndex * 20;
+          targetY = slot?.y ?? dealerY;
+        }
       }
 
       setCards((prev) => {
         // ✅ Keep all previous cards (never remove or replace)
         const existing = prev.some((c) => c.id === dealingStep);
         if (existing) return prev;
-        // Calculate bezier control points for smooth arc
-        const midX = (deckX + targetX) / 2;
-        const xOffset = Math.abs(targetX - deckX) * 0.15;
-
-        // Subtle arcs for player and dealer cards
-        // Player cards: Small upward arc
-        // Dealer cards: Small downward arc
-        const heightOffset = isPlayerCard ? -50 : 50; // Reduced height for subtler arcs
-
-        const controlPoint1 = {
-          x: isPlayerCard ? midX - xOffset : midX + xOffset,
-          y: Math.min(deckY, targetY) + heightOffset,
-        };
-        const controlPoint2 = {
-          x: isPlayerCard ? midX + xOffset : midX - xOffset,
-          y: Math.min(deckY, targetY) + heightOffset,
-        };
-
         const newCard: CardAnimation = {
           id: dealingStep,
           startX: deckX,
@@ -205,21 +157,12 @@ export function DealingAnimationSprite({
           targetX,
           targetY,
           progress: 0,
-          rotation: 0, // Start with no rotation
+          rotation: 5,
           card,
-          faceUp,
+          faceUp, // ✅ start face-down
           isDealerHole,
           flipProgress: 0,
-          shouldFlip: isPlayerCard,
-          // Current position starts at deck
-          x: deckX,
-          y: deckY,
-          // Animation enhancements
-          controlPoint1,
-          controlPoint2,
-          trail: [], // Will be populated during animation
-          bounceProgress: 0,
-          glowAlpha: 0.8, // Start with high glow
+          shouldFlip: isPlayerCard, // ✅ flip only for player cards
         };
 
         return [...prev, newCard];
@@ -227,25 +170,6 @@ export function DealingAnimationSprite({
     }
   }, [isDealing, dealingStep, playerCards, dealerCards]);
   console.log("cards", cards);
-
-  // Bezier curve helper
-  const getBezierPoint = (
-    t: number,
-    p0: { x: number; y: number },
-    p1: { x: number; y: number },
-    p2: { x: number; y: number },
-    p3: { x: number; y: number }
-  ) => {
-    const oneMinusT = 1 - t;
-    const b0 = oneMinusT * oneMinusT * oneMinusT;
-    const b1 = 3 * oneMinusT * oneMinusT * t;
-    const b2 = 3 * oneMinusT * t * t;
-    const b3 = t * t * t;
-    return {
-      x: b0 * p0.x + b1 * p1.x + b2 * p2.x + b3 * p3.x,
-      y: b0 * p0.y + b1 * p1.y + b2 * p2.y + b3 * p3.y,
-    };
-  };
 
   // Animate cards
   useTick((ticker) => {
@@ -261,60 +185,26 @@ export function DealingAnimationSprite({
               1
             );
 
-            // Custom easing for smoother motion
-            const eased = 1 - Math.pow(1 - newProgress, 4); // Quartic easing
-
-            // Calculate position along bezier curve
-            const currentPos = getBezierPoint(
-              eased,
-              { x: card.startX, y: card.startY },
-              card.controlPoint1,
-              card.controlPoint2,
-              { x: card.targetX, y: card.targetY }
-            );
-
-            // Calculate rotation based on movement direction
-            const nextPos = getBezierPoint(
-              Math.min(eased + 0.1, 1),
-              { x: card.startX, y: card.startY },
-              card.controlPoint1,
-              card.controlPoint2,
-              { x: card.targetX, y: card.targetY }
-            );
-
-            // No rotation
-            const trail = [
-              ...card.trail,
-              { x: currentPos.x, y: currentPos.y, rotation: 0 },
-            ].slice(-5);
-
-            // Fade out glow as card lands
-            const glowAlpha = card.glowAlpha * (1 - eased);
+            // Ease out cubic
+            const eased = 1 - Math.pow(1 - newProgress, 3);
 
             return {
               ...card,
               progress: newProgress,
-              rotation: 0,
-              trail,
-              bounceProgress: 0,
-              glowAlpha,
-              x: currentPos.x,
-              y: currentPos.y,
+              rotation: 5 * (1 - eased),
             };
           }
 
-          // Phase 2: Flip animation (after landing) - very fast flip
+          // Phase 2: Flip animation (after landing) - faster flip for clarity
           if (card.shouldFlip && card.flipProgress < 1) {
             const newFlipProgress = Math.min(
-              card.flipProgress + 0.2 * ticker.deltaTime,
+              card.flipProgress + 0.15 * ticker.deltaTime,
               1
             );
 
             return {
               ...card,
               flipProgress: newFlipProgress,
-              trail: [], // Clear trail after landing
-              glowAlpha: 0, // No glow during flip
             };
           }
 
@@ -322,6 +212,7 @@ export function DealingAnimationSprite({
         })
         .filter((card) => {
           // Keep cards visible throughout the entire dealing phase
+          // They will be replaced by HandSprite when isDealing becomes false
           return true;
         })
     );
@@ -332,6 +223,15 @@ export function DealingAnimationSprite({
   return (
     <pixiContainer>
       {cards.map((card) => {
+        const eased = 1 - Math.pow(1 - card.progress, 3);
+        const maxOffset = card.isDealerHole ? 0 : card.id * 10;
+        const offsetFactor = 1 - eased; // 1 → 0 as progress goes from 0 → 1
+        const currentX =
+          card.startX +
+          (card.targetX - card.startX) * eased +
+          maxOffset * offsetFactor;
+        const currentY = card.startY + (card.targetY - card.startY) * eased;
+
         let showFaceUp = false;
         let flipScale = 1;
 
@@ -349,7 +249,8 @@ export function DealingAnimationSprite({
           showFaceUp = true;
           flipScale = 1;
         } else {
-          showFaceUp = !card.isDealerHole;
+          // Dealer hole card stays face-down until flipped
+          showFaceUp = !card.isDealerHole; // Only show face-up for the first card
           flipScale = 1;
         }
 
@@ -371,48 +272,17 @@ export function DealingAnimationSprite({
         const baseScale = isMobile ? 0.08 : 0.12;
 
         return (
-          <pixiContainer key={card.id}>
-            {/* Trail effect */}
-            {card.trail.map((pos, i) => (
-              <pixiSprite
-                key={`trail-${i}`}
-                texture={getCardBackTexture()}
-                x={pos.x}
-                y={pos.y}
-                anchor={0.5}
-                scale={{ x: baseScale * 0.9, y: baseScale * 0.9 }}
-                alpha={0.1 * (i / card.trail.length)}
-                zIndex={card.id * 10 + i}
-                tint={0x4477ff}
-              />
-            ))}
-
-            {/* Glow effect */}
-            {card.glowAlpha > 0 && (
-              <pixiSprite
-                texture={texture}
-                x={card.x}
-                y={card.y}
-                anchor={0.5}
-                scale={{ x: baseScale * 1.2, y: baseScale * 1.2 }}
-                alpha={card.glowAlpha * 0.3}
-                zIndex={card.id * 10 + 5}
-                tint={0xffffff}
-                blendMode="screen" // Glow effect
-              />
-            )}
-
-            {/* Main card */}
-            <pixiSprite
-              texture={texture}
-              x={card.x}
-              y={card.y}
-              anchor={0.5}
-              scale={{ x: baseScale * flipScale, y: baseScale }}
-              alpha={card.progress}
-              zIndex={card.id * 10 + 6}
-            />
-          </pixiContainer>
+          <pixiSprite
+            key={card.id}
+            texture={texture}
+            x={currentX}
+            y={currentY}
+            anchor={0.5}
+            rotation={card.rotation * (Math.PI / 180)}
+            scale={{ x: baseScale * flipScale, y: baseScale }}
+            alpha={card.progress}
+            zIndex={card.id}
+          />
         );
       })}
     </pixiContainer>
