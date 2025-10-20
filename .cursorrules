@@ -1,0 +1,297 @@
+# BluffBets Blackjack - Cursor Rules
+
+## Project Overview
+
+This is a Next.js 14+ blackjack game with TypeScript, React, and Tailwind CSS. The game features pixel art styling, sound effects, and smooth animations.
+
+## File Naming Conventions
+
+### Components
+
+- **Format**: PascalCase
+- **Extension**: `.tsx`
+- **Examples**: `BlackjackGame.tsx`, `DealingAnimation.tsx`, `GameStateSelector.tsx`
+- **Location**: `/components` or organized subdirectories
+
+### Hooks
+
+- **Format**: camelCase with `use` prefix
+- **Extension**: `.ts` or `.tsx`
+- **Examples**: `useGameState.ts`
+- **Location**: `/hooks`
+
+### Utilities
+
+- **Format**: camelCase
+- **Extension**: `.ts`
+- **Examples**: `assets.ts`, `sounds.ts`, `cardUtils.ts`
+- **Location**: `/lib/utils` or `/lib`
+
+### Types
+
+- **Format**: camelCase
+- **Extension**: `.ts`
+- **Examples**: `game.ts`
+- **Location**: `/types`
+
+### API/Services
+
+- **Format**: camelCase
+- **Extension**: `.ts`
+- **Examples**: `mockGameApi.ts`
+- **Location**: `/lib`
+
+### Styles
+
+- **Format**: camelCase or kebab-case
+- **Extension**: `.css`
+- **Examples**: `globals.css`
+- **Location**: `/app` or component-specific
+
+## Directory Structure
+
+```
+/app                    # Next.js app directory (routes, layouts, globals)
+  /fonts               # Font files
+  favicon.ico
+  globals.css
+  layout.tsx
+  page.tsx
+
+/components             # All React components
+  /animations          # Animation-specific components
+    DealingAnimation.tsx
+  /dev                 # Development-only tools (not in production)
+    GameStateSelector.tsx
+  /ui                  # Reusable UI components (buttons, displays, etc.)
+    ActionButton.tsx
+    BetDisplay.tsx
+    BalanceDisplay.tsx
+    ChipButton.tsx
+    ChipStack.tsx
+    HandDisplay.tsx
+    MessageDisplay.tsx
+    index.ts           # Barrel export file
+  BlackjackGame.tsx    # Main game component
+
+/hooks                  # Custom React hooks
+  useGameState.ts
+
+/lib                    # Utilities, helpers, and services
+  /utils               # Utility functions
+    assets.ts          # Asset path management
+    sounds.ts          # Sound management
+    cardUtils.ts       # Card logic utilities
+  mockGameApi.ts       # Mock API for development
+
+/types                  # TypeScript type definitions
+  game.ts              # Game-related types and interfaces
+
+/public                 # Static assets
+  /assets
+    /fonts             # Font files (.ttf, .woff, etc.)
+    /icons             # Icon images
+      /actions
+      /game
+      /social
+    /images            # Image assets
+      /backgrounds
+      /cards
+      /logos
+      /ui
+    /sounds            # Audio files
+      /effects         # Sound effects (.wav, .mp3)
+      /music           # Background music
+    /videos            # Video assets
+```
+
+## Organization Rules
+
+### 1. Component Organization
+
+- **Main components**: Place in `/components` root
+- **UI components**: Reusable, presentational components go in `/components/ui`
+- **Animations**: Animation components go in `/components/animations`
+- **Dev tools**: Development/debugging tools go in `/components/dev`
+- **Barrel exports**: Create `index.ts` files for clean imports from folders with multiple exports
+
+### 2. Logic Separation
+
+- **Game logic**: Custom hooks in `/hooks`
+- **Business logic**: Utility functions in `/lib/utils`
+- **API/Services**: API integrations and mock services in `/lib`
+- **Type definitions**: All TypeScript interfaces/types in `/types`
+
+### 3. Asset Organization
+
+- **Images**: Organized by category in `/public/assets/images`
+- **Sounds**: Separated into `effects` and `music` in `/public/assets/sounds`
+- **Icons**: Categorized by type in `/public/assets/icons`
+- **Naming**: Use descriptive names, kebab-case or SCREAMING_SNAKE_CASE for assets
+
+### 4. Import Structure
+
+```typescript
+// 1. External dependencies (React, Next.js, etc.)
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+
+// 2. Internal utilities and helpers
+import { getLogo } from "@/lib/utils/assets";
+import { playSound } from "@/lib/utils/sounds";
+
+// 3. Hooks
+import { useGameState } from "@/hooks/useGameState";
+
+// 4. Types
+import { GamePhaseType, GameActionType } from "@/types/game";
+
+// 5. Components (grouped)
+import { ChipStack, BetDisplay, ActionButton } from "@/components/ui";
+import { GameStateSelector } from "@/components/dev/GameStateSelector";
+```
+
+## Code Style Guidelines
+
+### TypeScript
+
+- **Always use TypeScript**: No `.js` or `.jsx` files
+- **Explicit types**: Define interfaces for all component props
+- **Enums**: Use enums for fixed sets of values (e.g., `GamePhaseType`, `GameActionType`)
+- **Type exports**: Export types from `/types` directory, not inline with components
+
+### React Components
+
+- **Function components**: Use function declarations, not arrow functions for components
+- **Props interface**: Always define a props interface above the component
+- **Default exports**: Use default exports for page/main components
+- **Named exports**: Use named exports for utilities, hooks, and UI components
+
+### Styling
+
+- **Tailwind first**: Use Tailwind CSS classes for styling
+- **Custom CSS**: Only when necessary, place in `globals.css` or component-specific
+- **Pixel art**: Use `pixelated` class for pixel art images
+- **Animations**: Use Framer Motion for all animations (installed as `framer-motion`)
+  - Import from `framer-motion`: `motion`, `AnimatePresence`
+  - Use `motion.div`, `motion.button` for animated elements
+  - Use `whileHover`, `whileTap` for interactive elements
+  - Use `initial`, `animate`, `exit` for enter/exit animations
+  - Wrap with `<AnimatePresence>` for exit animations
+
+### Assets
+
+- **Asset helper**: Always use asset utility functions from `/lib/utils/assets.ts`
+- **No hardcoded paths**: Never hardcode asset paths directly
+- **Type-safe**: Use the asset path constants (`AssetPaths`)
+
+### Sounds
+
+- **Sound helper**: Use `playSound()` from `/lib/utils/sounds.ts`
+- **Preload**: Preload common sounds with `preloadCommonSounds()`
+- **Volume control**: Always specify volume (0-1 range)
+- **Duration limit**: Use duration parameter to limit long sounds
+
+## Best Practices
+
+### State Management
+
+- Use custom hooks for complex state logic
+- Keep component state minimal and focused
+- Lift state up when needed by multiple components
+
+### Performance
+
+- Use `React.memo()` for expensive components
+- Preload assets (images, sounds) on mount
+- Use `next/image` for all images (automatic optimization)
+- Add `priority` prop for above-the-fold images
+
+### File Size
+
+- Keep components under 300 lines
+- Split large components into smaller sub-components
+- Extract complex logic into utility functions or hooks
+
+### Error Handling
+
+- Handle loading states explicitly
+- Show user-friendly error messages
+- Use TypeScript for compile-time safety
+
+### Accessibility
+
+- Use semantic HTML elements
+- Include alt text for all images
+- Ensure keyboard navigation works
+
+## Development Tools
+
+### Dev-Only Components
+
+- Place in `/components/dev`
+- Only render in development mode
+- Use for debugging, state inspection, testing
+
+### Mock Data
+
+- Place mock APIs in `/lib` (e.g., `mockGameApi.ts`)
+- Match real API structure exactly
+- Document differences from real API
+
+## Git Practices
+
+### Commits
+
+- Use clear, descriptive commit messages
+- Group related changes together
+- Don't commit build files or node_modules
+
+### File Management
+
+- Keep repository clean
+- Remove unused files
+- Update existing documentation when structure changes
+
+## Common Patterns
+
+### Creating a New UI Component
+
+1. Create file in `/components/ui` with PascalCase name
+2. Define props interface
+3. Implement component with TypeScript
+4. Export from `/components/ui/index.ts`
+5. Use Tailwind for styling
+
+### Adding a New Game Feature
+
+1. Update types in `/types/game.ts` if needed
+2. Update mock API in `/lib/mockGameApi.ts`
+3. Add logic to hook in `/hooks/useGameState.ts`
+4. Create/update UI components as needed
+5. Integrate into main game component
+
+### Adding New Assets
+
+1. Place in appropriate `/public/assets` subdirectory
+2. Update `/lib/utils/assets.ts` if new category
+3. Use asset helper functions in components
+4. Follow existing naming conventions
+
+## Testing Approach
+
+- Use dev tools (GameStateSelector) for manual testing
+- Test all game states and transitions
+- Verify sound effects play correctly
+- Check animations are smooth
+- Ensure responsive design works
+
+## Important Notes
+
+- **NO inline styles**: Use Tailwind or CSS classes
+- **NO magic numbers**: Use constants or Tailwind values
+- **NO unused imports**: Clean up imports
+- **NO console.logs**: Remove debug logs before committing (use proper error handling)
+- **ALWAYS** use absolute imports with `@/` prefix
+- **ALWAYS** handle edge cases (empty states, errors, loading)
+- **ALWAYS** type component props explicitly

@@ -1,0 +1,3 @@
+- Ensure split bets work
+- fix mobile responsiveness
+- add troll box chat
