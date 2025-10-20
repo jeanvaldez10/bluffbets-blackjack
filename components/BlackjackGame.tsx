@@ -22,8 +22,7 @@ const BEVEL_PADDING_Y = 45; // top + bottom
 const MOBILE_PADDING = 2; // All sides
 
 export default function BlackjackGame() {
-  const { gameState, loading, error, sendAction, setGameStateDirectly } =
-    useGameState();
+  const { gameState, loading, error, sendAction, setGameStateDirectly } = useGameState();
   const [dimensions, setDimensions] = useState({
     canvasWidth: DESKTOP_CANVAS_WIDTH,
     canvasHeight: DESKTOP_CANVAS_HEIGHT,
@@ -124,10 +123,10 @@ export default function BlackjackGame() {
     };
 
     compute();
-    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
     return () => {
       if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
-      window.removeEventListener("resize", handleResize as EventListener);
+      window.removeEventListener('resize', handleResize as EventListener);
     };
   }, []);
 
@@ -135,14 +134,14 @@ export default function BlackjackGame() {
     <div
       className="h-screen w-screen text-white font-['Minecraft'] relative overflow-hidden flex items-center justify-center"
       style={{
-        backgroundImage: "url(/assets/images/backgrounds/bg-image.jpeg)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
+        backgroundImage: 'url(/assets/images/backgrounds/bg-image.jpeg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
       {/* Dev Tools Toggle Button - Only in development */}
-      {process.env.NODE_ENV === "development" && (
+      {process.env.NODE_ENV === 'development' && (
         <button
           onClick={() => setShowDevTools(!showDevTools)}
           className="fixed top-4 left-4 z-50 w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 border-2 border-white/20"
@@ -172,7 +171,7 @@ export default function BlackjackGame() {
       )}
 
       {/* Dev Tools - Only in development and when toggled */}
-      {process.env.NODE_ENV === "development" && showDevTools && (
+      {process.env.NODE_ENV === 'development' && showDevTools && (
         <>
           <GameStateSelector onSelectState={setGameStateDirectly} />
           <SoundTester />
@@ -192,32 +191,26 @@ export default function BlackjackGame() {
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: "url(/assets/images/backgrounds/bevel.png)",
-              backgroundSize: "100% 100%",
-              backgroundRepeat: "no-repeat",
+              backgroundImage: 'url(/assets/images/backgrounds/bevel.png)',
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
               zIndex: 10,
-              willChange: "transform",
-              contain: "paint",
+              willChange: 'transform',
+              contain: 'paint',
             }}
           />
         )}
 
         {/* Canvas Container with padding */}
         <div
-          className={`relative w-full h-full ${
-            isMobile ? "overflow-hidden rounded-2xl" : ""
-          }`}
+          className={`relative w-full h-full ${isMobile ? 'overflow-hidden rounded-2xl' : ''}`}
           style={{
-            padding: isMobile
-              ? `${MOBILE_PADDING}px`
-              : `${BEVEL_PADDING_Y}px ${BEVEL_PADDING_X}px`,
+            padding: isMobile ? `${MOBILE_PADDING}px` : `${BEVEL_PADDING_Y}px ${BEVEL_PADDING_X}px`,
           }}
         >
           {/* Inner container with border radius - clips canvas to rounded corners */}
           <div
-            className={`relative overflow-hidden ${
-              isMobile ? "rounded-2xl" : "rounded-3xl"
-            }`}
+            className={`relative overflow-hidden ${isMobile ? 'rounded-2xl' : 'rounded-3xl'}`}
             style={{
               width: `${dimensions.canvasWidth}px`,
               height: `${dimensions.canvasHeight}px`,
@@ -225,14 +218,9 @@ export default function BlackjackGame() {
           >
             {/* Felt background + centered loading text (only while PIXI not ready) */}
             {!pixiReady && (
-              <div
-                className="absolute inset-0"
-                style={{ backgroundColor: "#478269" }}
-              >
+              <div className="absolute inset-0" style={{ backgroundColor: '#478269' }}>
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-white text-xl font-['Minecraft']">
-                    Loading Game...
-                  </span>
+                  <span className="text-white text-xl font-['Minecraft']">Loading Game...</span>
                 </div>
               </div>
             )}
